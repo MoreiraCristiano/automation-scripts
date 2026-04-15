@@ -3,7 +3,7 @@
 set -e
 
 # =========================
-# HELPERS VISUAIS
+# HELPERS
 # =========================
 
 step() {
@@ -18,12 +18,31 @@ info() {
     echo "🔹 $1"
 }
 
-success() {
-    echo "✅ $1"
-}
+# =========================
+# CONFIG
+# =========================
+
+OH_MY_ZSH_DIR="$HOME/.oh-my-zsh"
+ZSHRC="$HOME/.zshrc"
+
+ZSH_PATH="$(which zsh)"
 
 # =========================
-# UPDATE SISTEMA
+# RESET (DETERMINÍSTICO)
+# =========================
+
+step "Resetando ambiente Zsh (modo idempotente total)"
+
+rm -rf "$OH_MY_ZSH_DIR"
+rm -f "$ZSHRC"
+
+# remove plugins customizados também
+rm -rf "$HOME/.oh-my-zsh-custom"
+
+info "Estado anterior removido"
+
+# =========================
+# SISTEMA
 # =========================
 
 step "Atualizando sistema"
@@ -31,81 +50,68 @@ step "Atualizando sistema"
 sudo apt update -y
 sudo apt upgrade -y
 
-# =========================
-# DEPENDÊNCIAS
-# =========================
-
 step "Instalando dependências"
 
 sudo apt install -y zsh curl git
 
-ZSH_PATH=$(which zsh)
 info "Zsh: $ZSH_PATH"
 
 # =========================
-# DEFINIR SHELL PADRÃO
+# SHELL PADRÃO
 # =========================
 
-step "Definindo Zsh como shell padrão"
+step "Definindo Zsh como shell padrão (seguro)"
 
 for user in $(cut -d: -f1 /etc/passwd); do
+    if getent passwd "$user" | grep -q "$ZSH_PATH"; then
+        continue
+    fi
+
     sudo chsh -s "$ZSH_PATH" "$user" 2>/dev/null || true
 done
 
-success "Shell padrão configurado"
-
 # =========================
-# OH MY ZSH
+# OH MY ZSH (FORÇADO LIMPO)
 # =========================
 
-step "Oh My Zsh"
+step "Instalando Oh My Zsh (fresh install)"
 
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    info "Instalando Oh My Zsh..."
-    export RUNZSH=no
-    export CHSH=no
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-else
-    success "Oh My Zsh já instalado"
-fi
+export RUNZSH=no
+export CHSH=no
+
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+# =========================
+# PLUGINS (DETACHED DIR PADRÃO)
+# =========================
+
+step "Instalando plugins"
 
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 PLUGIN_DIR="$ZSH_CUSTOM/plugins"
 
 mkdir -p "$PLUGIN_DIR"
 
-# =========================
-# PLUGINS
-# =========================
-
-step "Instalando plugins"
-
 install_plugin () {
     local name=$1
     local repo=$2
     local path="$PLUGIN_DIR/$name"
 
-    if [ ! -d "$path" ]; then
-        info "Instalando $name..."
-        git clone "$repo" "$path"
-    else
-        info "Atualizando $name..."
-        git -C "$path" pull --quiet || true
-    fi
+    rm -rf "$path"
+    git clone --depth=1 "$repo" "$path"
 }
 
 install_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
 install_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions.git"
 
 # =========================
-# TEMA CUSTOMIZADO
+# TEMA (FORÇADO LIMPO)
 # =========================
 
 step "Criando tema customizado"
 
-THEME_NAME="meutema"
 THEME_DIR="$HOME/.oh-my-zsh/custom/themes"
-THEME_FILE="$THEME_DIR/$THEME_NAME.zsh-theme"
+THEME_FILE="$THEME_DIR/meutema.zsh-theme"
 
 mkdir -p "$THEME_DIR"
 
@@ -127,15 +133,11 @@ virtualenv_prompt() {
 PROMPT=$'\n$(virtualenv_prompt)« %1~ »\nλ '
 EOF
 
-success "Tema criado"
-
 # =========================
-# ZSHRC
+# .ZSHRC (100% DETERMINÍSTICO)
 # =========================
 
-step "Configurando .zshrc"
-
-ZSHRC="$HOME/.zshrc"
+step "Criando .zshrc"
 
 cat > "$ZSHRC" << 'EOF'
 # =========================
@@ -155,13 +157,11 @@ alias k=kubectl
 source $ZSH/oh-my-zsh.sh
 EOF
 
-success ".zshrc configurado"
-
 # =========================
-# GIT CONFIG
+# GIT CONFIG (FORÇADO)
 # =========================
 
-step "Configurando git aliases"
+step "Configurando git aliases (reset)"
 
 git config --global alias.a "add -A"
 git config --global alias.l "log"
@@ -175,5 +175,5 @@ git config --global alias.pm "push -uf origin main"
 
 step "Finalizado"
 
-echo "🎉 Tudo pronto!"
+echo "🎉 Ambiente Zsh resetado e recriado com sucesso!"
 echo "👉 Rode: exec zsh"
