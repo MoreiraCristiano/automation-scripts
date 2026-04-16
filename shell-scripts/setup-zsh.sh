@@ -9,7 +9,7 @@ set -e
 step() {
     echo
     echo "=================================================="
-    echo "👉 $1"
+    echo "🚀 $1"
     echo "=================================================="
     echo
 }
@@ -175,5 +175,4 @@ git config --global alias.pm "push -uf origin main"
 
 step "Finalizado"
 
-echo "🎉 Ambiente Zsh resetado e recriado com sucesso!"
-echo "👉 Rode: exec zsh"
+echo "Ambiente Zsh resetado e recriado com sucesso!"
