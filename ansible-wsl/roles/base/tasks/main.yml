@@ -1,0 +1,20 @@
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  tags: [base]
+
+- name: Upgrade system
+  apt:
+    upgrade: dist
+  tags: [base]
+
+- name: Install base packages
+  apt:
+    name:
+      - curl
+      - git
+      - zsh
+      - ca-certificates
+      - gnupg
+    state: present
+  tags: [base]

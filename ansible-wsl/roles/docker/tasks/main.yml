@@ -1,0 +1,78 @@
+- name: Check if running on WSL
+  shell: grep -qi microsoft /proc/version
+  register: wsl_check
+  failed_when: wsl_check.rc != 0
+  changed_when: false
+  tags: [docker]
+
+- name: Ensure systemd enabled in WSL
+  copy:
+    dest: /etc/wsl.conf
+    content: |
+      [boot]
+      systemd=true
+  tags: [docker]
+
+- name: Update apt
+  apt:
+    update_cache: yes
+  tags: [docker]
+
+- name: Install dependencies
+  apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+  tags: [docker]
+
+- name: Check if Docker exists
+  command: which docker
+  register: docker_exists
+  failed_when: false
+  changed_when: false
+  tags: [docker]
+
+- name: Install Docker via official script
+  shell: |
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+    sh /tmp/get-docker.sh
+    rm -f /tmp/get-docker.sh
+  when: docker_exists.rc != 0
+  tags: [docker]
+
+- name: Install docker compose plugin (apt)
+  apt:
+    name: docker-compose-plugin
+    state: present
+  register: compose_pkg
+  failed_when: false
+  tags: [docker]
+
+- name: Fallback install docker-compose standalone
+  shell: |
+    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+  when: compose_pkg is failed
+  tags: [docker]
+
+- name: Add user to docker group
+  user:
+    name: "{{ ansible_user_id }}"
+    groups: docker
+    append: yes
+  tags: [docker]
+
+- name: Enable Docker service
+  systemd:
+    name: docker
+    enabled: yes
+  ignore_errors: true
+  tags: [docker]
+
+- name: Start Docker service
+  systemd:
+    name: docker
+    state: started
+  tags: [docker]

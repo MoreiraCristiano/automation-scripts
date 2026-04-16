@@ -1,0 +1,9 @@
+- name: Setup WSL Environment
+  hosts: localhost
+  become: yes
+
+  roles:
+    - base
+    - docker
+    - zsh
+    - git
