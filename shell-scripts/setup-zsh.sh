@@ -42,10 +42,44 @@ rm -rf "$HOME/.oh-my-zsh-custom"
 info "Estado anterior removido"
 
 # =========================
+# APT MIRROR OTIMIZADO
+# =========================
+
+step "Configurando mirrors rápidos do APT (Brasil)"
+
+UBUNTU_SOURCES="/etc/apt/sources.list.d/ubuntu.sources"
+
+sudo tee "$UBUNTU_SOURCES" > /dev/null << 'EOF'
+Types: deb
+URIs: http://ubuntu.c3sl.ufpr.br/ubuntu/
+Suites: noble noble-updates noble-backports
+Components: main universe restricted multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+Types: deb
+URIs: http://ubuntu.c3sl.ufpr.br/ubuntu/
+Suites: noble-security
+Components: main universe restricted multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+EOF
+
+info "Mirror configurado: UFPR (Brasil)"
+
+# =========================
+# IPV4 FIX
+# =========================
+
+step "Forçando uso de IPv4 no APT"
+
+echo 'Acquire::ForceIPv4 "true";' | sudo tee /etc/apt/apt.conf.d/99force-ipv4 > /dev/null
+
+info "IPv4 forçado"
+
+# =========================
 # SISTEMA
 # =========================
 
-step "Atualizando sistema"
+step "Atualizando sistema (com mirror otimizado)"
 
 sudo apt update -y
 sudo apt upgrade -y
@@ -54,7 +88,6 @@ step "Instalando dependências"
 
 sudo apt install -y zsh curl git
 
-info "Zsh: $ZSH_PATH"
 
 # =========================
 # SHELL PADRÃO
