@@ -40,10 +40,39 @@ if [[ ! -f "$PACKAGE_FILE" ]]; then
   exit 1
 fi
 
-if [[ -z "${VIRTUAL_ENV:-}" ]]; then
-  echo -e "${RED}Erro: você não está em um virtualenv.${NC}"
-  echo "Ative um ambiente virtual antes de continuar."
-  exit 1
+# =========================
+# Verificação de ambiente
+# =========================
+IN_VENV=false
+if [[ -n "${VIRTUAL_ENV:-}" ]]; then
+  IN_VENV=true
+fi
+
+echo "=========================================="
+echo "Ambiente de execução"
+echo "=========================================="
+
+if $IN_VENV; then
+  echo -e "${GREEN}✔ Executando em virtualenv: $VIRTUAL_ENV${NC}"
+else
+  echo -e "${YELLOW}⚠ NÃO está em um virtualenv${NC}"
+  echo -e "${YELLOW}Isso irá instalar pacotes no Python global${NC}"
+  echo ""
+
+  read -p "Deseja continuar mesmo assim? (s/n): " confirm1
+  if [[ ! "$confirm1" =~ ^[Ss]$ ]]; then
+    echo "Operação cancelada."
+    exit 0
+  fi
+
+  echo ""
+  read -p "Digite 'INSTALAR GLOBAL' para confirmar: " confirm2
+  if [[ "$confirm2" != "INSTALAR GLOBAL" ]]; then
+    echo -e "${RED}Confirmação inválida. Abortando.${NC}"
+    exit 1
+  fi
+
+  echo -e "${GREEN}✔ Confirmação aceita${NC}"
 fi
 
 # =========================
