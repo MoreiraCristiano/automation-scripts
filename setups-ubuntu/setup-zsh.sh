@@ -242,7 +242,7 @@ setup_theme() {
   section "Tema"
 
   local dir="$HOME/.oh-my-zsh/custom/themes"
-  local file="$dir/meutema.zsh-theme"
+  local file="$dir/lambdatheme.zsh-theme"
 
   run "mkdir -p $dir"
 
@@ -270,7 +270,7 @@ setup_zshrc() {
 export ZSH=\"$HOME/.oh-my-zsh\"
 export VIRTUAL_ENV_DISABLE_PROMPT=1
 
-ZSH_THEME=\"meutema\"
+ZSH_THEME=\"lambdatheme\"
 plugins=(zsh-autosuggestions zsh-syntax-highlighting)
 
 alias k=kubectl
