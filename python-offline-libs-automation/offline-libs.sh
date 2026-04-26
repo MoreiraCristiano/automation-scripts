@@ -38,21 +38,21 @@ check_venv() {
 }
 
 confirm_venv() {
-  warn "Você NÃO está em um virtualenv"
-  warn "Isso pode afetar o Python global do sistema"
+  warn "You are NOT in a virtualenv"
+  warn "This will install packages in the global Python"
   echo ""
-  read -p "Deseja continuar mesmo assim? (s/n): " confirm1
-  if [[ ! "$confirm1" =~ ^[Ss]$ ]]; then
-    info "Operação cancelada."
+  read -p "Continue anyway? (y/n): " confirm1
+  if [[ ! "$confirm1" =~ ^[Yy]$ ]]; then
+    info "Operation cancelled."
     exit 0
   fi
   echo ""
-  read -p "Digite 'CONFIRMAR' para confirmar: " confirm2
-  if [[ "$confirm2" != "CONFIRMAR" ]]; then
-    error "Confirmação inválida. Abortando."
+  read -p "Type 'CONFIRM' to confirm: " confirm2
+  if [[ "$confirm2" != "CONFIRM" ]]; then
+    error "Invalid confirmation. Aborting."
     exit 1
   fi
-  success "Confirmação aceita"
+  success "Confirmation accepted"
 }
 
 cmd_download() {
@@ -62,18 +62,18 @@ cmd_download() {
   local abi=""
 
   require_value() {
-    [[ -n "${2:-}" ]] || { echo "Valor ausente para $1"; exit 1; }
+    [[ -n "${2:-}" ]] || { echo "Missing value for $1"; exit 1; }
   }
 
   usage() {
-    echo "Uso: $0 download <requirements.txt> [opções]"
+    echo "Usage: $0 download <requirements.txt> [options]"
     echo ""
-    echo "Opções:"
-    echo "  --platform           Plataforma alvo"
-    echo "  --python-version     Versão do Python (ex: 312, 311)"
-    echo "  --implementation     Implementação (default: cp)"
+    echo "Options:"
+    echo "  --platform           Target platform"
+    echo "  --python-version     Python version (e.g., 312, 311)"
+    echo "  --implementation     Implementation (default: cp)"
     echo "  --abi                ABI (default: auto)"
-    echo "  -h, --help           Exibe ajuda"
+    echo "  -h, --help           Show help"
     exit 1
   }
 
@@ -110,7 +110,7 @@ cmd_download() {
         usage
         ;;
       *)
-        echo "Argumento inválido: $1"
+        echo "Invalid argument: $1"
         usage
         ;;
     esac
@@ -119,12 +119,12 @@ cmd_download() {
   abi="${abi:-cp${python_version}}"
 
   if [[ ! -f "$requirements_file" ]]; then
-    error "Arquivo não encontrado: $requirements_file"
+    error "File not found: $requirements_file"
     exit 1
   fi
 
   if [[ ! "$python_version" =~ ^[0-9]{3}$ ]]; then
-    error "PYTHON_VERSION inválido: $python_version"
+    error "Invalid PYTHON_VERSION: $python_version"
     exit 1
   fi
 
@@ -132,26 +132,26 @@ cmd_download() {
   local wheels_dir="${output_dir}/wheels"
   local archive_name="offline-packages.tar.gz"
 
-  section "Preparando diretórios"
-  info "Removendo diretório anterior: $output_dir"
+  section "Preparing directories"
+  info "Removing previous directory: $output_dir"
   rm -rf "$output_dir"
-  info "Criando estrutura: $wheels_dir"
+  info "Creating structure: $wheels_dir"
   mkdir -p "$wheels_dir"
-  success "Diretórios prontos"
+  success "Directories ready"
 
-  section "Configuração do ambiente alvo"
+  section "Target environment config"
   info "Platform: $target_platform"
   info "Python: $python_version"
   info "Implementation: $implementation"
   info "ABI: $abi"
 
-  section "Preparando arquivos"
-  info "Copiando requirements"
+  section "Preparing files"
+  info "Copying requirements"
   cp "$requirements_file" "${output_dir}/requirements.txt"
-  success "Requirements copiado"
+  success "Requirements copied"
 
-  section "Download de dependências"
-  info "Baixando wheels compatíveis com o ambiente alvo"
+  section "Downloading dependencies"
+  info "Downloading wheels compatible with target environment"
 
   pip download \
     --requirement "$requirements_file" \
@@ -162,32 +162,32 @@ cmd_download() {
     --implementation "$implementation" \
     --abi "$abi"
 
-  success "Download concluído"
+  success "Download completed"
 
-  section "Empacotamento"
-  info "Gerando arquivo: $archive_name"
+  section "Packaging"
+  info "Generating archive: $archive_name"
   tar -czf "$archive_name" "$output_dir"
 
   if [[ ! -s "$archive_name" ]]; then
-    error "Falha ao gerar o arquivo $archive_name"
+    error "Failed to generate $archive_name"
     exit 1
   fi
 
-  success "Pacote gerado com sucesso"
+  success "Package generated successfully"
 
-  section "Limpeza"
-  info "Removendo diretório temporário: $output_dir"
+  section "Cleanup"
+  info "Removing temporary directory: $output_dir"
   rm -rf "$output_dir"
-  success "Diretório removido"
+  success "Directory removed"
 
-  section "Finalizado"
-  info "Arquivo gerado:"
+  section "Done"
+  info "Generated file:"
   echo "→ $archive_name"
 }
 
 cmd_install() {
   if [[ $# -lt 1 ]]; then
-    error "Uso: $0 install <caminho/do/pacote.tar.gz>"
+    error "Usage: $0 install <path/to/package.tar.gz>"
     exit 1
   fi
 
@@ -203,28 +203,28 @@ cmd_install() {
   trap cleanup EXIT
 
   if [[ ! -f "$package_file" ]]; then
-    error "Arquivo não encontrado: $package_file"
+    error "File not found: $package_file"
     exit 1
   fi
 
-  section "Ambiente de execução"
+  section "Execution environment"
 
   if check_venv; then
-    success "Executando em virtualenv: $VIRTUAL_ENV"
+    success "Running in virtualenv: $VIRTUAL_ENV"
   else
-    warn "NÃO está em um virtualenv"
-    warn "Isso irá instalar pacotes no Python global"
+    warn "NOT in a virtualenv"
+    warn "This will install packages in the global Python"
     confirm_venv
   fi
 
-  section "Instalação offline"
+  section "Offline installation"
 
-  info "Usando pacote: $package_file"
-  info "Preparando ambiente..."
+  info "Using package: $package_file"
+  info "Preparing environment..."
   rm -rf "$work_dir"
   mkdir -p "$work_dir"
 
-  info "Extraindo pacote..."
+  info "Extracting package..."
   tar -xzf "$package_file" -C "$work_dir"
 
   local base_dir="${work_dir}/offline-packages"
@@ -232,93 +232,93 @@ cmd_install() {
   local req_file="${base_dir}/requirements.txt"
 
   if [[ ! -d "$wheels_dir" ]]; then
-    error "Diretório de wheels não encontrado"
+    error "Wheels directory not found"
     exit 1
   fi
 
   if [[ ! -f "$req_file" ]]; then
-    error "requirements.txt não encontrado"
+    error "requirements.txt not found"
     exit 1
   fi
 
-  info "Instalando dependências offline..."
+  info "Installing dependencies offline..."
 
   if pip install \
     --no-index \
     --find-links="$wheels_dir" \
     --requirement "$req_file"; then
 
-    success "Instalação concluída com sucesso"
+    success "Installation completed successfully"
   else
-    error "Falha na instalação"
+    error "Installation failed"
     exit 1
   fi
 
-  section "Pacotes instalados"
+  section "Installed packages"
   pip list
 }
 
 cmd_uninstall() {
-  section "Ambiente"
+  section "Environment"
 
   if check_venv; then
-    success "Executando dentro de virtualenv"
+    success "Running in virtualenv"
     info "Path: $VIRTUAL_ENV"
   else
     confirm_venv
   fi
 
-  section "Pacotes instalados"
+  section "Installed packages"
   pip list
   echo ""
 
-  warn "Todos os pacotes listados serão removidos"
-  read -p "Deseja continuar? (s/n): " confirm
+  warn "All listed packages will be removed"
+  read -p "Continue? (y/n): " confirm
 
-  if [[ ! "$confirm" =~ ^[Ss]$ ]]; then
-    info "Operação cancelada."
+  if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+    info "Operation cancelled."
     exit 0
   fi
 
-  section "Remoção"
+  section "Uninstalling"
 
-  info "Gerando lista de pacotes..."
+  info "Generating package list..."
   local packages
   packages=$(pip freeze | sed 's/@.*//' | sed 's/==.*//')
 
   if [[ -z "$packages" ]]; then
-    warn "Nenhum pacote para remover"
+    warn "No packages to remove"
     exit 0
   fi
 
-  info "Removendo pacotes..."
+  info "Removing packages..."
   pip uninstall -y $packages
 
-  success "Remoção concluída"
+  success "Uninstall completed"
 
-  section "Estado final"
+  section "Final state"
   pip list
 
-  success "Processo finalizado"
+  success "Process completed"
 }
 
 usage() {
   echo "Python Offline Libs Automation"
   echo ""
-  echo "Uso: $0 <comando> [opções]"
+  echo "Usage: $0 <command> [options]"
   echo ""
-  echo "Comandos:"
-  echo "  download <requirements.txt> [opções]  Baixa e empacota dependências"
-  echo "  install <pacote.tar.gz>               Instala pacotes offline"
-  echo "  uninstall                              Remove todos os pacotes"
+  echo "Commands:"
+  echo "  download <requirements.txt> [options]  Download and package dependencies"
+  echo "  install <package.tar.gz>               Install packages offline"
+  echo "  uninstall                                Remove all packages"
   echo ""
-  echo "Opções de download:"
-  echo "  --platform           Plataforma alvo (ex: manylinux2014_x86_64)"
-  echo "  --python-version     Versão do Python (ex: 312, 311)"
-  echo "  --implementation     Implementação (default: cp)"
+  echo "Download options:"
+  echo "  --platform           Target platform (e.g., manylinux2014_x86_64)"
+  echo "  --python-version     Python version (e.g., 312, 311)"
+  echo "  --implementation     Implementation (default: cp)"
   echo "  --abi                ABI (default: auto)"
   echo ""
-  echo "Exemplos:"
+  echo "Examples:"
   echo "  $0 download requirements.txt --platform manylinux2014_x86_64 --python-version 312"
   echo "  $0 install offline-packages.tar.gz"
   echo "  $0 uninstall"
@@ -347,7 +347,7 @@ main() {
       usage
       ;;
     *)
-      error "Comando desconhecido: $command"
+      error "Unknown command: $command"
       echo ""
       usage
       exit 1

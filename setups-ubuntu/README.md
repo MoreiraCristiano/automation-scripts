@@ -1,29 +1,29 @@
 # setups-ubuntu
 
-Scripts para facilitar a configuração de ambientes Ubuntu.
+Scripts to simplify Ubuntu environment setup.
 
-## Scripts disponíveis
+## Available Scripts
 
 - **setup-docker-wsl.sh**
-  - Instala e configura o Docker em ambientes WSL (Windows Subsystem for Linux).
-  - Útil para quem deseja rodar containers Docker no Ubuntu via WSL.
+  - Installs and configures Docker on WSL (Windows Subsystem for Linux).
+  - Useful for those who want to run Docker containers on Ubuntu via WSL.
 
 - **setup-zsh.sh**
-  - Instala o Zsh e configura como shell padrão.
-  - Inclui sugestões de configuração para tornar o terminal mais produtivo.
+  - Installs Zsh and sets it as the default shell.
+  - Includes configuration suggestions to make the terminal more productive.
 
-## Exemplo de uso
+## Usage
 
-Execute o script desejado com permissões de superusuário:
+Run the desired script with superuser privileges:
 
 ```bash
 sudo bash setup-docker-wsl.sh
 ```
 
-ou
+or
 
 ```bash
 sudo bash setup-zsh.sh
 ```
 
-> **Dica:** Antes de executar, revise o conteúdo dos scripts para garantir que atendem às suas necessidades.
+> **Tip:** Before running, review the script contents to ensure they meet your needs.

@@ -2,10 +2,6 @@
 
 set -e
 
-# =========================
-# HELPERS
-# =========================
-
 step() {
     echo
     echo "=================================================="
@@ -18,24 +14,16 @@ info() {
     echo "🔹 $1"
 }
 
-# =========================
-# CHECK WSL
-# =========================
-
-step "Verificando ambiente WSL"
+step "Checking WSL environment"
 
 if ! grep -qi microsoft /proc/version; then
-    echo "❌ Este script foi feito para WSL."
+    echo "❌ This script is designed for WSL."
     exit 1
 fi
 
-info "WSL detectado"
+info "WSL detected"
 
-# =========================
-# SYSTEMD (WSL2)
-# =========================
-
-step "Ativando systemd (se necessário)"
+step "Enabling systemd (if needed)"
 
 WSL_CONF="/etc/wsl.conf"
 
@@ -45,33 +33,25 @@ if ! grep -q "systemd=true" "$WSL_CONF" 2>/dev/null; then
 systemd=true
 EOF"
 
-    info "systemd habilitado (reinicie o WSL depois se necessário)"
+    info "systemd enabled (restart WSL if needed)"
 else
-    info "systemd já habilitado"
+    info "systemd already enabled"
 fi
 
-# =========================
-# DEPENDÊNCIAS
-# =========================
-
-step "Atualizando sistema"
+step "Updating system"
 
 sudo apt-get update -y
 
-step "Instalando dependências base"
+step "Installing base dependencies"
 
 sudo apt-get install -y ca-certificates curl gnupg
 
-# =========================
-# DOCKER INSTALL CHECK
-# =========================
-
-step "Verificando Docker"
+step "Checking Docker"
 
 if command -v docker >/dev/null 2>&1; then
-    info "Docker já instalado"
+    info "Docker already installed"
 else
-    info "Instalando Docker..."
+    info "Installing Docker..."
 
     curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
     sudo sh /tmp/get-docker.sh
@@ -79,50 +59,34 @@ else
     rm -f /tmp/get-docker.sh
 fi
 
-# =========================
-# USER PERMISSIONS
-# =========================
-
-step "Configurando permissões do Docker"
+step "Configuring Docker permissions"
 
 if ! groups "$USER" | grep -q docker; then
     sudo usermod -aG docker "$USER"
-    info "Usuário adicionado ao grupo docker (relogin necessário)"
+    info "User added to docker group (relogin required)"
 else
-    info "Usuário já está no grupo docker"
+    info "User already in docker group"
 fi
 
-# =========================
-# START DOCKER
-# =========================
-
-step "Iniciando Docker"
+step "Starting Docker"
 
 sudo systemctl enable docker >/dev/null 2>&1 || true
 sudo systemctl start docker >/dev/null 2>&1 || true
 
-# =========================
-# TESTE FINAL
-# =========================
-
-step "Testando instalação"
+step "Testing installation"
 
 if docker info >/dev/null 2>&1; then
-    info "Docker funcionando"
+    info "Docker is running"
 else
-    echo "⚠️ Docker pode precisar de reinício do WSL"
+    echo "⚠️ Docker may need WSL restart"
 fi
 
 echo
-echo "Rodando hello-world (opcional)..."
+echo "Running hello-world (optional)..."
 
 docker run hello-world || true
 
-# =========================
-# FINAL
-# =========================
+step "Done"
 
-step "Finalizado"
-
-echo "🎉 Docker instalado no WSL"
-echo "👉 Se necessário, reinicie o WSL: wsl --shutdown"
+echo "🎉 Docker installed on WSL"
+echo "👉 If needed, restart WSL: wsl --shutdown"

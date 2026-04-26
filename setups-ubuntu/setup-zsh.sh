@@ -2,16 +2,8 @@
 
 set -Eeuo pipefail
 
-# =========================
-# GLOBALS
-# =========================
-
 DRY_RUN=false
 LOG_FILE="/tmp/bootstrap-zsh.log"
-
-# =========================
-# COLORS (TTY SAFE)
-# =========================
 
 if [[ -t 1 ]]; then
   RED='\033[0;31m'
@@ -24,10 +16,6 @@ if [[ -t 1 ]]; then
 else
   RED='' GREEN='' YELLOW='' BLUE='' CYAN='' BOLD='' NC=''
 fi
-
-# =========================
-# LOGGING
-# =========================
 
 log() {
   local level="$1"; shift
@@ -51,10 +39,6 @@ ok()    { log OK "$@"; }
 warn()  { log WARN "$@"; }
 error() { log ERROR "$@"; }
 
-# =========================
-# SECTIONS (UX IMPORTANTE)
-# =========================
-
 section() {
   local title="$1"
 
@@ -64,15 +48,7 @@ section() {
   echo -e "${BOLD}${CYAN}══════════════════════════════════════════════════${NC}"
 }
 
-# =========================
-# ERROR HANDLING
-# =========================
-
-trap 'error "Erro na linha $LINENO: $BASH_COMMAND"' ERR
-
-# =========================
-# DRY RUN
-# =========================
+trap 'error "Error on line $LINENO: $BASH_COMMAND"' ERR
 
 run() {
   if $DRY_RUN; then
@@ -81,10 +57,6 @@ run() {
     eval "$@"
   fi
 }
-
-# =========================
-# RETRY
-# =========================
 
 retry() {
   local retries=3
@@ -96,40 +68,32 @@ retry() {
     count=$((count + 1))
 
     if [ $count -ge $retries ]; then
-      error "Falhou após $count tentativas: $*"
+      error "Failed after $count attempts: $*"
       return $exit_code
     fi
 
-    warn "Tentativa $count falhou. Retry em ${delay}s..."
+    warn "Attempt $count failed. Retrying in ${delay}s..."
     sleep $delay
     delay=$((delay * 2))
   done
 }
 
-# =========================
-# DETECT OS
-# =========================
-
 detect_os() {
-  section "Detectando sistema operacional"
+  section "Detecting OS"
 
   source /etc/os-release
   OS_ID="$ID"
   OS_VERSION="$VERSION_ID"
 
   info "OS: $OS_ID"
-  info "Versão: $OS_VERSION"
+  info "Version: $OS_VERSION"
 }
 
-# =========================
-# APT
-# =========================
-
 configure_apt_mirror() {
-  section "Configurando APT"
+  section "Configuring APT"
 
   if [[ "$OS_ID" == "ubuntu" && "$OS_VERSION" == "24.04" ]]; then
-    info "Aplicando mirror UFPR"
+    info "Applying UFPR mirror"
 
     run "sudo tee /etc/apt/sources.list.d/ubuntu.sources > /dev/null << 'EOF'
 Types: deb
@@ -139,80 +103,68 @@ Components: main universe restricted multiverse
 Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 EOF"
 
-    ok "Mirror configurado"
+    ok "Mirror configured"
   else
-    warn "Mirror ignorado (incompatível)"
+    warn "Mirror skipped (incompatible)"
   fi
 }
 
 force_ipv4() {
-  info "Forçando IPv4"
+  info "Forcing IPv4"
   run "echo 'Acquire::ForceIPv4 \"true\";' | sudo tee /etc/apt/apt.conf.d/99force-ipv4 > /dev/null"
 }
 
 install_base_packages() {
-  section "Instalação de pacotes"
+  section "Installing packages"
 
   info "apt update"
   retry sudo apt update
 
-  info "Instalando zsh, curl, git"
+  info "Installing zsh, curl, git"
   retry sudo apt install -y zsh curl git
 
-  ok "Dependências instaladas"
+  ok "Dependencies installed"
 }
 
-# =========================
-# ZSH
-# =========================
-
 set_default_shell() {
-  section "Configuração do Zsh"
+  section "Configuring Zsh"
 
   local zsh_path
   zsh_path="$(command -v zsh)"
 
   if [[ -z "$zsh_path" ]]; then
-    error "zsh não encontrado"
+    error "zsh not found"
     exit 1
   fi
 
   current_shell="$(getent passwd "$USER" | cut -d: -f7)"
 
   if [[ "$current_shell" == "$zsh_path" ]]; then
-    ok "Zsh já é padrão"
+    ok "Zsh is already default"
     return
   fi
 
-  info "Alterando shell para $USER"
+  info "Changing shell for $USER"
   run "chsh -s $zsh_path $USER"
 
-  ok "Shell atualizado"
+  ok "Shell updated"
 }
-
-# =========================
-# OH MY ZSH
-# =========================
 
 install_oh_my_zsh() {
   section "Oh My Zsh"
 
   if [[ -d "$HOME/.oh-my-zsh" ]]; then
-    warn "Removendo instalação anterior"
+    warn "Removing previous installation"
     run "rm -rf $HOME/.oh-my-zsh"
   fi
 
-  info "Instalando Oh My Zsh"
+  info "Installing Oh My Zsh"
 
   run "export RUNZSH=no CHSH=no; \
   sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
 
-  ok "Oh My Zsh instalado"
+  ok "Oh My Zsh installed"
 }
-
-# =========================
-# PLUGINS
-# =========================
 
 install_plugin() {
   local name="$1"
@@ -231,15 +183,11 @@ setup_plugins() {
   install_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
   install_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions.git"
 
-  ok "Plugins instalados"
+  ok "Plugins installed"
 }
 
-# =========================
-# THEME
-# =========================
-
 setup_theme() {
-  section "Tema"
+  section "Theme"
 
   local dir="$HOME/.oh-my-zsh/custom/themes"
   local file="$dir/lambdatheme.zsh-theme"
@@ -256,12 +204,8 @@ virtualenv_prompt() {
 PROMPT=\$'\\n\$(virtualenv_prompt)« %1~ »\\nλ '
 EOF"
 
-  ok "Tema criado"
+  ok "Theme created"
 }
-
-# =========================
-# ZSHRC
-# =========================
 
 setup_zshrc() {
   section ".zshrc"
@@ -278,12 +222,8 @@ alias k=kubectl
 source \$ZSH/oh-my-zsh.sh
 EOF"
 
-  ok ".zshrc configurado"
+  ok ".zshrc configured"
 }
-
-# =========================
-# GIT
-# =========================
 
 setup_git() {
   section "Git"
@@ -294,12 +234,8 @@ setup_git() {
   run "git config --global alias.c 'commit -m'"
   run "git config --global alias.pm 'push -uf origin main'"
 
-  ok "Git configurado"
+  ok "Git configured"
 }
-
-# =========================
-# ARGS
-# =========================
 
 parse_args() {
   for arg in "$@"; do
@@ -308,10 +244,6 @@ parse_args() {
     esac
   done
 }
-
-# =========================
-# MAIN
-# =========================
 
 main() {
   parse_args "$@"
@@ -332,8 +264,8 @@ main() {
   setup_zshrc
   setup_git
 
-  section "Finalizado"
-  ok "Ambiente pronto 🚀"
+  section "Done"
+  ok "Environment ready 🚀"
 }
 
 main "$@"
