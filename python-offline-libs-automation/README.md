@@ -1,74 +1,74 @@
 # Python Offline Libs Automation
 
-Este projeto contém três scripts Bash para facilitar o download, instalação offline e remoção de pacotes Python em ambientes sem acesso à internet.
+Script único para download, instalação offline e remoção de pacotes Python em ambientes sem acesso à internet.
 
-## Scripts disponíveis
+## Uso
 
-- **download-and-compress-libs.sh**
-- **install-offline-packages.sh**
-- **uninstall-packages.sh**
-
----
-
-## 1. download-and-compress-libs.sh
-
-Baixa todos os pacotes especificados em um `requirements.txt` e gera um pacote compactado (`offline-packages.tar.gz`) contendo os arquivos `.whl` e o próprio `requirements.txt`.
-
-### Uso
 ```bash
-./download-and-compress-libs.sh requirements.txt [opções]
+./offline-libs.sh <comando> [opções]
 ```
 
-### Opções
+## Comandos
+
+### download
+Baixa todos os pacotes especificados em um `requirements.txt` e gera um pacote compactado (`offline-packages.tar.gz`).
+
+```bash
+./offline-libs.sh download requirements.txt [opções]
+```
+
+**Opções:**
 - `--platform`           Plataforma alvo (ex: manylinux2014_x86_64)
 - `--python-version`     Versão do Python (ex: 312, 311)
 - `--implementation`     Implementação (default: cp)
 - `--abi`                ABI (default: auto)
-- `-h, --help`           Exibe ajuda
 
-### Exemplo
+**Exemplo:**
 ```bash
-./download-and-compress-libs.sh requirements.txt --platform manylinux2014_x86_64 --python-version 312
+./offline-libs.sh download requirements.txt --platform manylinux2014_x86_64 --python-version 312
 ```
-
-Ao final, será gerado o arquivo `offline-packages.tar.gz`.
 
 ---
 
-## 2. install-offline-packages.sh
+### install
+Instala pacotes Python a partir de um pacote gerado pelo comando `download`.
 
-Instala pacotes Python a partir de um pacote gerado pelo script anterior, sem necessidade de acesso à internet.
-
-### Uso
 ```bash
-./install-offline-packages.sh caminho/do/offline-packages.tar.gz
+./offline-libs.sh install <caminho/do/pacote.tar.gz>
 ```
 
 - Recomenda-se executar dentro de um virtualenv.
-- O script extrai o pacote, valida a estrutura e executa a instalação offline.
 
-### Exemplo
+**Exemplo:**
 ```bash
-./install-offline-packages.sh offline-packages.tar.gz
+./offline-libs.sh install offline-packages.tar.gz
 ```
 
 ---
 
-## 3. uninstall-packages.sh
+### uninstall
+Remove todos os pacotes Python instalados no ambiente atual.
 
-Remove todos os pacotes Python instalados no ambiente atual (virtualenv ou global).
-
-### Uso
 ```bash
-./uninstall-packages.sh
+./offline-libs.sh uninstall
 ```
 
-- Recomenda-se executar dentro de um virtualenv para evitar afetar o Python global.
-- O script solicita confirmação extra caso não esteja em um virtualenv.
-
-### Exemplo
-```bash
-./uninstall-packages.sh
-```
+- Recomenda-se executar dentro de um virtualenv.
+- O script solicita confirmação caso não esteja em um virtualenv.
 
 ---
+
+## Exemplos
+
+```bash
+# 1. Baixar dependências (máquina com internet)
+./offline-libs.sh download requirements.txt --python-version 312
+
+# 2. Transferir offline-packages.tar.gz para ambiente airgapped
+
+# 3. Instalar (ambiente airgapped)
+./offline-libs.sh install offline-packages.tar.gz
+
+# 4. Se precisar remover
+./offline-libs.sh uninstall
+```
