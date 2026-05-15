@@ -3,7 +3,10 @@
 set -Eeuo pipefail
 
 DRY_RUN=false
-LOG_FILE="/tmp/bootstrap-zsh.log"
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/setups-ubuntu"
+LOG_FILE="$LOG_DIR/bootstrap-zsh.log"
+
+mkdir -p "$LOG_DIR"
 
 if [[ -t 1 ]]; then
   RED='\033[0;31m'
