@@ -14,7 +14,25 @@ Scripts to simplify Ubuntu environment setup.
 
 ## Usage
 
-Run the desired script with superuser privileges:
+Run the desired setup through `make`:
+
+```bash
+make docker-wsl
+```
+
+or
+
+```bash
+make zsh
+```
+
+To list all available actions:
+
+```bash
+make help
+```
+
+You can also run the scripts directly:
 
 ```bash
 sudo bash setup-docker-wsl.sh
